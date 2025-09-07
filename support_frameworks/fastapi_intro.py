@@ -57,4 +57,37 @@ def get_item_by_parameters(name: str | None=None,price: float | None = None,
         "selection":selection
     } 
 
+@app.post("/")
+def add_item(item: Item) -> dict[str,Item]:
+    if item.id in items:
+        raise HTTPException(status_code=400,detail=f"item with id {item.id} is already present")
+    
+    items[item.id] = item
+    return {"added":item}
 
+@app.put("/update/{item_id}")
+def update_item(item_id: int,name: str | None = None,price: float | None = None,
+                stock: int | None = None) -> dict[str,Item]:
+    
+    if item_id not in items:
+        raise HTTPException(status_code=404,detail=f"item with id {item_id} does not exist")
+    
+    if all([x is None for x in [name, price, stock]]):
+        raise HTTPException(status_code=400, detail="at least name, price or stock has to be non-null")
+
+    if name is not None:
+        items[item_id].name = name
+
+    items[item_id].price = items[item_id].price if price is None else price
+    items[item_id].stock = items[item_id].stock if stock is None else stock
+
+    return {"updated":items[item_id]}
+
+@app.delete("/delete/{item_id}")
+def delete_item(item_id: int) -> dict[str,Item]:
+    if item_id not in items:
+        raise HTTPException(status_code=404,detail=f"item with id {item_id} not found")
+    
+    item = items.pop(item_id)
+    return {"removed":item}
+    
